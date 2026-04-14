@@ -2,6 +2,8 @@ from autogen_agentchat.agents import AssistantAgent
 from autogen_ext.models.openai import OpenAIChatCompletionClient
 from autogen_agentchat.messages import TextMessage, MultiModalMessage
 from autogen_core import Image as AGImage
+from autogen_core import CancellationToken
+from autogen_agentchat.ui import Console
 
 from PIL import Image
 from io import BytesIO
@@ -73,6 +75,43 @@ async def text_task():
     print("Calling via tesxt message")
     print(result.messages[-1].content)
 
+async def assistant_task():
+    await asyncio.sleep(2)   # waits for 2 seconds
+    
+
+
+    result = await assistant.on_messages(
+        messages=[TextMessage(content="What is the weather in Chennai?", source="user")],
+        cancellation_token=CancellationToken()
+    )
+    print("\n")
+    
+    print("Calling via ON messageS")
+    print(result.inner_messages)
+    print('\n\n\n\n')
+    print(result.chat_message)
+    
+
+
+async def assistant_task_stream_msg():
+    await asyncio.sleep(2)   # waits for 2 seconds
+    
+
+
+    result = await Console(
+        assistant.on_messages_stream(
+        messages=[TextMessage(content="What is the weather in Chennai?", source="user")],
+        cancellation_token=CancellationToken()
+        ),
+        output_stats=True
+    )
+    print("\n")
+    
+    print("Calling via ON messageS Stream")
+    #print(result.inner_messages)
+    print('\n')
+    print(result.chat_message)
+    
 
 # Async main function
 async def main():
@@ -85,7 +124,7 @@ async def main():
     print("\n")
     print(result.messages[-1].content)
     
-    await asyncio.gather(text_task(), image_task())
+    await asyncio.gather(text_task(), image_task(),assistant_task(), assistant_task_stream_msg())
 
 
     # Print full response
