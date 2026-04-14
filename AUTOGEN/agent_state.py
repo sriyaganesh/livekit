@@ -30,37 +30,22 @@ model_client = OpenAIChatCompletionClient(
         model="gpt-4o-mini"   # ✅ using mini model
     )
 
-termination = MaxMessageTermination(max_messages=5)
-
 # Agents
 
 
 
 first_agent = AssistantAgent(
-    name="add1_agent_1",
+    name="my_assistant",
     model_client=model_client,
-    system_message="Add 1 to the number. First number is 0. Give result number as output."
+    system_message="You are a helpful assistant. Answer the question based on the conversation."
 )
+
 
 second_agent = AssistantAgent(
-    name="add1_agent_2",
+    name="my_second_assistant",
     model_client=model_client,
-    system_message="Take the last number mentioned in the conversation and add 1. Give result number as output."
+    system_message="You are a helpful assistant. Answer the question based on the conversation."
 )
-
-third_agent = AssistantAgent(
-    name="add1_agent_3",
-    model_client=model_client,
-    system_message="Take the last number mentioned in the conversation and add 1. Give result number as output."
-)
-
-
-
-team=RoundRobinGroupChat([first_agent, second_agent, third_agent],
-                         # max_turns=3
-                         termination_condition=termination
-                         )
-
 
 
     
@@ -71,16 +56,32 @@ async def main():
     # Console-based streaming of team responses
     print("Console bases responses:")
     # This is to termainate after 5 messages
-    await Console(team.run_stream())
+    response=await first_agent.on_messages(
+        messages=[TextMessage(content="Tell me a joke",
+                  source="user"
+                   
+                )], 
+                cancellation_token=CancellationToken()
+                )
+                  
+                                
+    print("Final response:")
+    print(response.chat_message.content)
 
-    #await Console(team.run_stream(task="First number is 4"))
+    state_agent1=await first_agent.save_state()
+    print("first agent state:")
+    print(state_agent1)
 
-    # # Resume Team
-    # await Console(team.run_stream())
-    # await Console(team.run_stream(task="what is the last number you have got in the result?"))
+    
+    await second_agent.load_state(state_agent1)
 
-    # # reset team
-    # await team.reset()
+    
+    state_agent2=await second_agent.save_state()
+    print("second_agent state:")
+    print(state_agent2)
+
+    
+    
 
 if __name__ == "__main__":
     asyncio.run(main())
